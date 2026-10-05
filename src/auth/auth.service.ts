@@ -156,4 +156,48 @@ export class AuthService {
       accessToken: token,
     };
   }
+  
+  async forgotPassword(dto: SigninDto) {
+    const [user] = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.email, dto.email));
+
+    if (!user) {
+      throw new UnauthorizedException(
+        "Invalid email or password",
+      );
+    }
+
+    const passwordMatch = await bcrypt.compare(
+      dto.password,
+      user.password,
+    );
+
+    if (passwordMatch) {
+      throw new UnauthorizedException(
+        "Invalid password ! New password cannot be same as old password",
+      );
+    } else {
+      const hashedPassword = await bcrypt.hash(dto.password, 10);
+      await this.db.update(users).set({ password: hashedPassword }).where(eq(users.id, user.id));
+    }
+
+    const token = this.jwtService.sign({
+      sub: user.id,
+      email: user.email,
+    });
+
+    return {
+      message: "Password reset successful",
+
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
+
+      accessToken: token,
+    };
+  }
 }

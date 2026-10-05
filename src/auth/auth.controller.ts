@@ -7,6 +7,7 @@ import {
 import { AuthService } from "./auth.service.js";
 import { SignupDto } from "./dto/signup.dto.js";
 import { SigninDto } from "./dto/signin.dto.js";
+import { ForgetPasswordDto } from "./dto/forgetPassword.dto.js";
 
 @Controller("/auth")
 export class AuthController {
@@ -22,5 +23,10 @@ export class AuthController {
   @Post("signin")
   signin(@Body() dto: SigninDto) {
     return this.authService.signin(dto);
+  }
+  
+  @Post("forgot-password")
+  forgotPassword(@Body() dto: ForgetPasswordDto) {
+    return this.authService.forgotPassword(dto);
   }
 }
