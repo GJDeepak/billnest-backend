@@ -1,6 +1,6 @@
 # BillNest Backend
 
-A backend API for a billing and invoice management system, built with **NestJS, TypeScript, Node.js, and PostgreSQL**.
+A scalable billing and invoice management backend built with **Node.js, TypeScript, NestJS, PostgreSQL, and Drizzle ORM**.
 
 ## 🚀 Tech Stack
 
@@ -8,6 +8,7 @@ A backend API for a billing and invoice management system, built with **NestJS, 
 * **TypeScript** – Type-safe development
 * **NestJS** – Backend framework
 * **PostgreSQL** – Relational database
+* **Drizzle ORM** – Type-safe ORM for PostgreSQL
 * **REST API** – API architecture
 * **JWT** – Authentication and authorization
 * **Git & GitHub** – Version control
@@ -16,14 +17,17 @@ A backend API for a billing and invoice management system, built with **NestJS, 
 
 * User authentication and authorization
 * JWT-based authentication
-* Billing and invoice management
 * Customer management
+* Billing management
+* Invoice management
 * PostgreSQL database integration
+* Type-safe database queries using Drizzle ORM
+* Database migrations using Drizzle Kit
 * RESTful APIs
 * Request validation
 * Centralized error handling
 * Environment-based configuration
-* Modular and scalable backend architecture
+* Modular NestJS architecture
 
 ## 📁 Project Structure
 
@@ -34,9 +38,15 @@ billnest-backend/
 │   ├── users/
 │   ├── customers/
 │   ├── invoices/
+│   ├── database/
+│   │   ├── schema/
+│   │   ├── migrations/
+│   │   └── database.module.ts
 │   ├── common/
 │   ├── app.module.ts
 │   └── main.ts
+├── drizzle.config.ts
+├── .env
 ├── .env.example
 ├── .gitignore
 ├── package.json
@@ -44,13 +54,11 @@ billnest-backend/
 └── README.md
 ```
 
-> The folder structure may vary depending on the modules implemented in the project.
-
 ## ⚙️ Getting Started
 
 ### Prerequisites
 
-Make sure you have the following installed:
+Make sure the following are installed:
 
 * Node.js
 * npm
@@ -69,31 +77,225 @@ cd billnest-backend
 npm install
 ```
 
-### 3. Configure environment variables
+## 🗄️ PostgreSQL Setup
 
-Create a `.env` file in the project root.
+Create a PostgreSQL database:
 
-Example:
+```sql
+CREATE DATABASE billing_db;
+```
+
+Make sure PostgreSQL is running before starting the application.
+
+## 🔧 Drizzle ORM Setup
+
+BillNest uses **Drizzle ORM** to communicate with PostgreSQL.
+
+Drizzle provides:
+
+* Type-safe SQL queries
+* PostgreSQL schema definitions
+* Database migrations
+* Compile-time type safety
+* Lightweight ORM functionality
+
+### Install Drizzle
+
+```bash
+npm install drizzle-orm pg
+npm install -D drizzle-kit
+```
+
+### Configure environment variables
+
+Create a `.env` file:
 
 ```env
 PORT=3000
 
-DATABASE_HOST=localhost
-DATABASE_PORT=5432
-DATABASE_NAME=billing_db
-DATABASE_USER=postgres
-DATABASE_PASSWORD=your_password
+DATABASE_URL=postgresql://postgres:your_password@localhost:5432/billing_db
 
 JWT_SECRET=your_jwt_secret
 ```
 
-> Never commit your `.env` file to GitHub.
+For GitHub, keep only an example configuration:
 
-### 4. Start PostgreSQL
+```env
+DATABASE_URL=postgresql://postgres:your_password@localhost:5432/billing_db
+```
 
-Make sure your PostgreSQL server is running and the configured database exists.
+**Never commit the real `.env` file.**
 
-### 5. Run the application
+### Drizzle configuration
+
+Create `drizzle.config.ts`:
+
+```typescript
+import "dotenv/config";
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  schema: "./src/database/schema/*.ts",
+  out: "./src/database/migrations",
+  dialect: "postgresql",
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+});
+```
+
+### Database connection
+
+Example Drizzle database connection:
+
+```typescript
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+export const db = drizzle(pool);
+```
+
+## 🏗️ Drizzle Schema Example
+
+Example user schema:
+
+```typescript
+import {
+  pgTable,
+  serial,
+  varchar,
+  timestamp,
+} from "drizzle-orm/pg-core";
+
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+
+  name: varchar("name", {
+    length: 255,
+  }).notNull(),
+
+  email: varchar("email", {
+    length: 255,
+  }).notNull().unique(),
+
+  createdAt: timestamp("created_at")
+    .defaultNow()
+    .notNull(),
+});
+```
+
+## 🔄 Database Migrations
+
+Generate migrations from schema changes:
+
+```bash
+npx drizzle-kit generate
+```
+
+Apply migrations:
+
+```bash
+npx drizzle-kit migrate
+```
+
+For development, you can also use:
+
+```bash
+npx drizzle-kit push
+```
+
+Open Drizzle Studio:
+
+```bash
+npx drizzle-kit studio
+```
+
+## 🔍 Example Drizzle Query
+
+Fetch all users:
+
+```typescript
+const result = await db.select().from(users);
+```
+
+Fetch a user by email:
+
+```typescript
+const result = await db
+  .select()
+  .from(users)
+  .where(eq(users.email, email));
+```
+
+Insert a user:
+
+```typescript
+await db.insert(users).values({
+  name: "John",
+  email: "john@example.com",
+});
+```
+
+Update a user:
+
+```typescript
+await db
+  .update(users)
+  .set({
+    name: "John Updated",
+  })
+  .where(eq(users.id, userId));
+```
+
+Delete a user:
+
+```typescript
+await db
+  .delete(users)
+  .where(eq(users.id, userId));
+```
+
+## 🔐 Authentication
+
+Authentication is implemented using **JWT**.
+
+Typical flow:
+
+```text
+Client
+  ↓
+Login API
+  ↓
+Validate credentials
+  ↓
+Generate JWT
+  ↓
+Return access token
+  ↓
+Client sends token
+  ↓
+JWT Guard validates token
+  ↓
+Protected API
+```
+
+## 🛡️ API Security
+
+The backend follows common API security practices:
+
+* JWT authentication
+* Password hashing
+* Request validation
+* Protected routes
+* Environment variables for secrets
+* Centralized exception handling
+* PostgreSQL parameterized/type-safe queries
+
+## ▶️ Running the Application
 
 Development mode:
 
@@ -114,95 +316,21 @@ The API will be available at:
 http://localhost:3000
 ```
 
-## 🔐 Environment Variables
-
-| Variable            | Description                            |
-| ------------------- | -------------------------------------- |
-| `PORT`              | Application port                       |
-| `DATABASE_HOST`     | PostgreSQL host                        |
-| `DATABASE_PORT`     | PostgreSQL port                        |
-| `DATABASE_NAME`     | Database name                          |
-| `DATABASE_USER`     | PostgreSQL username                    |
-| `DATABASE_PASSWORD` | PostgreSQL password                    |
-| `JWT_SECRET`        | Secret key used for JWT authentication |
-
-## 🗄️ Database
-
-BillNest uses **PostgreSQL** as its relational database.
-
-The application uses PostgreSQL for storing and managing billing-related data such as:
-
-* Users
-* Customers
-* Invoices
-* Billing information
-
-## 🔑 Authentication
-
-Authentication is implemented using **JWT (JSON Web Tokens)**.
-
-Typical authentication flow:
-
-```text
-Client
-  ↓
-Login API
-  ↓
-Validate credentials
-  ↓
-Generate JWT
-  ↓
-Return token
-  ↓
-Client sends token with protected requests
-  ↓
-JWT Guard validates token
-  ↓
-Access protected API
-```
-
-## 🛡️ API Security
-
-The backend follows common API security practices including:
-
-* JWT authentication
-* Password hashing
-* Request validation
-* Protected routes
-* Environment variables for sensitive configuration
-* Centralized exception handling
-
 ## 🧪 Testing
 
-Run the test suite with:
+Run tests:
 
 ```bash
 npm run test
 ```
 
-For test coverage:
+Run test coverage:
 
 ```bash
 npm run test:cov
 ```
 
-## 📦 Build
-
-Create a production build:
-
-```bash
-npm run build
-```
-
-The compiled application will be generated in the `dist` directory.
-
 ## 🔄 Git Workflow
-
-Clone the repository:
-
-```bash
-git clone https://github.com/GJDeepak/billnest-backend.git
-```
 
 Create a feature branch:
 
@@ -210,14 +338,19 @@ Create a feature branch:
 git checkout -b feature/your-feature
 ```
 
-Commit changes:
+Add changes:
 
 ```bash
 git add .
+```
+
+Commit:
+
+```bash
 git commit -m "Add billing API"
 ```
 
-Push the branch:
+Push:
 
 ```bash
 git push origin feature/your-feature
@@ -227,7 +360,9 @@ git push origin feature/your-feature
 
 **Jothi Deepak G**
 
-Backend Developer | Node.js | TypeScript | NestJS | PostgreSQL
+Backend Developer
+
+**Technologies:** Node.js · TypeScript · NestJS · PostgreSQL · Drizzle ORM
 
 ## 📄 License
 
