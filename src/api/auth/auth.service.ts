@@ -8,10 +8,10 @@ import {
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 
-import { DATABASE } from "../database/database.module.js";
-import { users } from "../database/schema/users.schema.js";
-import { shops } from "../database/schema/shops.schema.js";
-import { branches } from "../database/schema/branches.schema.js";
+import { DATABASE } from "../../database/database.module.js";
+import { users } from "../../database/schema/users.schema.js";
+import { shops } from "../../database/schema/shops.schema.js";
+import { branches } from "../../database/schema/branches.schema.js";
 
 import { eq } from "drizzle-orm";
 
@@ -115,89 +115,85 @@ export class AuthService {
   }
 
   async signin(dto: SigninDto) {
-    const result = await this.db
-      .select()
-      .from(users)
-      .where(eq(users.email, dto.email));
-
-    const user = result[0];
-
-    if (!user) {
-      throw new UnauthorizedException(
-        "Invalid email or password",
-      );
-    }
-
-    const passwordMatch = await bcrypt.compare(
-      dto.password,
-      user.password,
-    );
-
-    if (!passwordMatch) {
-      throw new UnauthorizedException(
-        "Invalid email or password",
-      );
-    }
-
-    const token = this.jwtService.sign({
-      sub: user.id,
-      email: user.email,
-    });
-
-    return {
-      message: "Signin successful",
-
-      user: {
-        id: user.id,
-        name: user.name,
+    try {
+      const [user] = await this.db
+        .select()
+        .from(users)
+        .where(eq(users.email, dto.email));
+  
+      if (!user) {
+        throw new UnauthorizedException("Invalid email or password");
+      }
+      
+      const [[shop], passwordMatch] = await Promise.all([
+        this.db.select().from(shops).where(eq(shops.userId, user.id)),
+        bcrypt.compare(dto.password, user.password)
+      ])
+  
+      if (!passwordMatch) {
+        throw new UnauthorizedException("Invalid email or password");
+      }
+  
+      const token = this.jwtService.sign({
+        userId: user.id,
+        shopId: shop.id,
         email: user.email,
-      },
-
-      accessToken: token,
-    };
-  }
+      });
+      
+      return {
+        message: "Signin successful",
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
+        accessToken: token,
+      };
+    } catch (error: unknown) {
+      throw error;
+    }
+  } 
   
   async forgotPassword(dto: SigninDto) {
-    const [user] = await this.db
-      .select()
-      .from(users)
-      .where(eq(users.email, dto.email));
-
-    if (!user) {
-      throw new UnauthorizedException(
-        "Invalid email or password",
-      );
-    }
-
-    const passwordMatch = await bcrypt.compare(
-      dto.password,
-      user.password,
-    );
-
-    if (passwordMatch) {
-      throw new UnauthorizedException(
-        "Invalid password ! New password cannot be same as old password",
-      );
-    } else {
-      const hashedPassword = await bcrypt.hash(dto.password, 10);
-      await this.db.update(users).set({ password: hashedPassword }).where(eq(users.id, user.id));
-    }
-
-    const token = this.jwtService.sign({
-      sub: user.id,
-      email: user.email,
-    });
-
-    return {
-      message: "Password reset successful",
-
-      user: {
-        id: user.id,
-        name: user.name,
+    try {
+      const [user] = await this.db
+        .select()
+        .from(users)
+        .where(eq(users.email, dto.email));
+  
+      if (!user) {
+        throw new UnauthorizedException("Invalid email or password");
+      }
+  
+      const [[shop], passwordMatch] = await Promise.all([
+        this.db.select().from(shops).where(eq(shops.userId, user.id)),
+        bcrypt.compare(dto.password, user.password)
+      ])
+  
+      if (passwordMatch) {
+        throw new UnauthorizedException("Invalid password ! New password cannot be same as old password");
+      } else {
+        const hashedPassword = await bcrypt.hash(dto.password, 10);
+        await this.db.update(users).set({ password: hashedPassword }).where(eq(users.id, user.id));
+      }
+  
+      const token = this.jwtService.sign({
+        userId: user.id,
+        shopId: shop.id,
         email: user.email,
-      },
-
-      accessToken: token,
-    };
+      });
+  
+      return {
+        message: "Password reset successful",
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
+        accessToken: token,
+      };
+    } catch (error: unknown) {
+      throw error;
+    }
   }
 }

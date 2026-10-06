@@ -1,25 +1,29 @@
 import {
+  integer,
   pgTable,
   serial,
-  varchar,
   timestamp,
-  integer
+  varchar,
 } from "drizzle-orm/pg-core";
 
-import { users } from "./users.schema.js";
+import { shops } from "./shops.schema.js";
 
-export const shops = pgTable("shops", {
+export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
 
-  userId: integer("user_id")
+  shopId: integer("shop_id")
     .notNull()
-    .references(() => users.id, {
+    .references(() => shops.id, {
       onDelete: "cascade",
     }),
 
-  shopName: varchar("shop_name", {
-    length: 150,
+  name: varchar("name", {
+    length: 100,
   }).notNull(),
+  
+  description: varchar("description", {
+    length: 255,
+  }),
 
   createdAt: timestamp("created_at")
     .defaultNow()
