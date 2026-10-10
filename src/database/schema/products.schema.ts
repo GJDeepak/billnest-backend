@@ -1,70 +1,45 @@
 import {
-  boolean,
-  integer,
-  numeric,
-  pgTable,
-  serial,
-  timestamp,
-  varchar,
+  boolean, integer, numeric, pgEnum,
+  pgTable, serial, varchar, timestamp,
 } from "drizzle-orm/pg-core";
 
 import { shops } from "./shops.schema.js";
 import { categories } from "./categories.schema.js";
+import { branches } from "./branches.schema.js";
+
+export const stockStatusEnum = pgEnum("stock_status", [
+  "in_stock", "few_only_available",
+  "out_of_stock", "blocked",
+]);
 
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
 
-  shopId: integer("shop_id")
-    .notNull()
-    .references(() => shops.id, {
-      onDelete: "cascade",
-    }),
+  shopId: integer("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
 
-  categoryId: integer("category_id")
-    .references(() => categories.id, {
-      onDelete: "set null",
-    }),
+  branchId: integer("branch_id").notNull().references(() => branches.id, { onDelete: "cascade" }),
 
-  name: varchar("name", {
-    length: 150,
-  }).notNull(),
+  categoryId: integer("category_id").references(() => categories.id, { onDelete: "set null" }),
 
-  note: varchar("name", {
-    length: 150,
-  }).notNull(),
+  name: varchar("name", { length: 150 }).notNull(),
 
-  productCode: varchar("product_code", {
-    length: 50,
-  }).notNull(),
+  note: varchar("name", { length: 150 }).notNull(),
 
-  hsnCode: varchar("hsn_code", {
-    length: 20,
-  }),
+  productCode: varchar("product_code", { length: 50 }),
 
-  gstRate: numeric("gst_rate", {
-    precision: 5,
-    scale: 2,
-  }).notNull().default("0"),
+  hsnCode: varchar("hsn_code", { length: 20 }),
 
-  purchasePrice: numeric("purchase_price", {
-    precision: 12,
-    scale: 2,
-  }),
+  gstRate: numeric("gst_rate", { precision: 5, scale: 2 }).default("0"),
 
-  sellingPrice: numeric("selling_price", {
-    precision: 12,
-    scale: 2,
-  }).notNull(),
+  purchasePrice: numeric("purchase_price", { precision: 12, scale: 2 }),
 
-  isActive: boolean("is_active")
-    .notNull()
-    .default(true),
+  sellingPrice: numeric("selling_price", { precision: 12, scale: 2 }).notNull(),
 
-  createdAt: timestamp("created_at")
-    .defaultNow()
-    .notNull(),
+  isActive: boolean("is_active").notNull().default(true),
 
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .notNull(),
+  stockStatus: stockStatusEnum("stock_status").default("in_stock"),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

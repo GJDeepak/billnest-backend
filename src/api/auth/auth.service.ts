@@ -7,28 +7,27 @@ import {
 
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
+import { eq } from "drizzle-orm";
 
 import { DATABASE } from "../../database/database.module.js";
 import { users } from "../../database/schema/users.schema.js";
 import { shops } from "../../database/schema/shops.schema.js";
 import { branches } from "../../database/schema/branches.schema.js";
 
-import { eq } from "drizzle-orm";
-
 import { SignupDto } from "./dto/signup.dto.js";
 import { SigninDto } from "./dto/signin.dto.js";
+
+import { handleDatabaseError } from "../../utils/errors/database-error.handler.js";
 
 @Injectable()
 export class AuthService {
   constructor(
     @Inject(DATABASE)
     private readonly db: any,
-
     private readonly jwtService: JwtService,
   ) {}
 
   async signup(dto: SignupDto) {
-
     try {
       const existingUser = await this.db
         .select()
@@ -52,6 +51,9 @@ export class AuthService {
         email: dto.email,
         password: hashedPassword,
         shopName: dto.shopName,
+        ...(dto.userRole && {userRole: dto.userRole}),
+        ...(dto.businessType && {businessType: dto.businessType}),
+        ...(dto.termsAccepted !== undefined && {termsAccepted: dto.termsAccepted}),
         ...address
       };
 
@@ -99,19 +101,18 @@ export class AuthService {
     };
 
     } catch (error: unknown) {
-    // Database unique constraint
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      error.code === "23505"
-    ) {
-      throw new ConflictException("Email already exists");
+      // Database unique constraint
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === "23505"
+      ) {
+        throw new ConflictException("Email already exists");
+      }
+
+      handleDatabaseError(error);
     }
-
-    throw error;
-  }
-
   }
 
   async signin(dto: SigninDto) {
@@ -150,7 +151,7 @@ export class AuthService {
         accessToken: token,
       };
     } catch (error: unknown) {
-      throw error;
+      handleDatabaseError(error);
     }
   } 
   
@@ -193,7 +194,7 @@ export class AuthService {
         accessToken: token,
       };
     } catch (error: unknown) {
-      throw error;
+      handleDatabaseError(error);
     }
   }
 }

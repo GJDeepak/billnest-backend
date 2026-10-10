@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEmail,
   IsNotEmpty,
   IsOptional,
@@ -28,6 +29,10 @@ export class SignupDto {
   
   @IsString()
   @IsOptional()
+  businessType: string;
+
+  @IsString()
+  @IsOptional()
   city: string;
   
   @IsString()
@@ -41,4 +46,8 @@ export class SignupDto {
   @IsString()
   @IsOptional()
   location: string;
+
+  @IsBoolean()
+  @IsOptional()
+  termsAccepted: boolean;
 }

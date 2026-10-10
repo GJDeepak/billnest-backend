@@ -4,6 +4,7 @@ import {
   serial,
   timestamp,
   varchar,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 import { shops } from "./shops.schema.js";
@@ -24,6 +25,8 @@ export const categories = pgTable("categories", {
   description: varchar("description", {
     length: 255,
   }),
+
+  status: boolean("status").default(true),
 
   createdAt: timestamp("created_at")
     .defaultNow()
