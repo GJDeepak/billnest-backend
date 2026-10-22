@@ -3,6 +3,7 @@ import {
   check, integer, numeric,
   pgEnum, pgTable, serial,
   text, timestamp, unique,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -20,7 +21,8 @@ export const adjustmentReasonEnum = pgEnum("adjustment_reason", [
 export const adjustmentTypeEnum = pgEnum("adjustment_type", ["added", "removed", "updated"]);
 
 export const stocks = pgTable("stocks", {
-    id: serial("id").primaryKey(),
+    // id: serial("id").primaryKey(),
+    id: uuid("id").primaryKey().defaultRandom(),
 
     shopId: integer("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
 

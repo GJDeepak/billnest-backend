@@ -47,10 +47,11 @@ export class AuthService {
       };
 
       const insertUserData = {
-        name: dto.name,
-        email: dto.email,
+        // name: dto.name,
+        // email: dto.email,
+        // shopName: dto.shopName,
+        ...dto,
         password: hashedPassword,
-        shopName: dto.shopName,
         ...(dto.userRole && {userRole: dto.userRole}),
         ...(dto.businessType && {businessType: dto.businessType}),
         ...(dto.termsAccepted !== undefined && {termsAccepted: dto.termsAccepted}),
@@ -68,8 +69,10 @@ export class AuthService {
         const [shop] = await tx
         .insert(shops)
         .values({
+          ...dto,
           userId: user.id,
           shopName: dto.shopName,
+          ...address,
         })
         .returning({ id: shops.id, shopName: shops.shopName });
 

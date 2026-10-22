@@ -9,9 +9,9 @@ import { AuthService } from "../auth/auth.service.js";
   imports: [
     JwtModule.register({
       secret: process.env.JWT_SECRET,
-      signOptions: {
-        expiresIn: "7d",
-      },
+      // signOptions: {
+      //   expiresIn: "1m",
+      // },
     }),
   ],
   controllers: [AuthController],

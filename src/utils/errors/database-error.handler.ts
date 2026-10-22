@@ -3,7 +3,7 @@ import {
   ConflictException,
   InternalServerErrorException,
   ServiceUnavailableException,
-} from '@nestjs/common';
+} from "@nestjs/common";
 
 interface DatabaseError {
   code?: string;
@@ -28,10 +28,8 @@ export function handleDatabaseError(error: unknown): never {
      * - Duplicate email
      * - Duplicate SKU
      */
-    case '23505':
-      throw new ConflictException(
-        getUniqueViolationMessage(dbError),
-      );
+    case "23505":
+      throw new ConflictException(getUniqueViolationMessage(dbError));
 
     /**
      * PostgreSQL:
@@ -41,10 +39,8 @@ export function handleDatabaseError(error: unknown): never {
      * - Invalid vendorId
      * - Invalid productId
      */
-    case '23503':
-      throw new BadRequestException(
-        'Referenced record does not exist',
-      );
+    case "23503":
+      throw new BadRequestException(dbError.message || "Referenced record does not exist");
 
     /**
      * PostgreSQL:
@@ -53,10 +49,8 @@ export function handleDatabaseError(error: unknown): never {
      * Example:
      * Required database field is missing.
      */
-    case '23502':
-      throw new BadRequestException(
-        'Required field is missing',
-      );
+    case "23502":
+      throw new BadRequestException(dbError.message || "Required field is missing");
 
     /**
      * PostgreSQL:
@@ -66,10 +60,8 @@ export function handleDatabaseError(error: unknown): never {
      * - Negative price
      * - Invalid stock quantity
      */
-    case '23514':
-      throw new BadRequestException(
-        'Invalid data provided',
-      );
+    case "23514":
+      throw new BadRequestException("Invalid data provided");
 
     /**
      * PostgreSQL:
@@ -78,19 +70,15 @@ export function handleDatabaseError(error: unknown): never {
      * Example:
      * Trying to use "abc" where PostgreSQL expects an integer.
      */
-    case '22P02':
-      throw new BadRequestException(
-        'Invalid data format',
-      );
+    case "22P02":
+      throw new BadRequestException(dbError.message || "Invalid data format");
 
     /**
      * PostgreSQL:
      * 22003 = numeric_value_out_of_range
      */
-    case '22003':
-      throw new BadRequestException(
-        'Numeric value is out of range',
-      );
+    case "22003":
+      throw new BadRequestException("Numeric value is out of range");
 
     /**
      * PostgreSQL:
@@ -98,29 +86,22 @@ export function handleDatabaseError(error: unknown): never {
      *
      * Usually caused by concurrent transactions.
      */
-    case '40001':
-      throw new ServiceUnavailableException(
-        'Transaction could not be completed. Please try again',
-      );
+    case "40001":
+      throw new ServiceUnavailableException(dbError.message || "Transaction could not be completed. Please try again");
 
     /**
      * PostgreSQL:
      * 40P01 = deadlock_detected
      */
-    case '40P01':
-      throw new ServiceUnavailableException(
-        'Database transaction conflict. Please try again',
-      );
+    case "40P01":
+      throw new ServiceUnavailableException(dbError.message || "Database transaction conflict. Please try again");
 
     /**
      * Unknown database error
      */
     default:
-      console.error('Database error:', error);
-
-      throw new InternalServerErrorException(
-        'Database operation failed',
-      );
+      console.error("Database error:", JSON.stringify(dbError));
+      throw new InternalServerErrorException(dbError.message || "Database operation failed");
   }
 }
 
@@ -132,13 +113,13 @@ function getUniqueViolationMessage(
 ): string {
   const constraint = error.constraint?.toLowerCase();
 
-  if (constraint?.includes('email')) {
-    return 'Email already exists';
+  if (constraint?.includes("email")) {
+    return "Email already exists";
   }
 
-  if (constraint?.includes('sku') || constraint?.includes('hsn')) {
-    return 'SKU already exists';
+  if (constraint?.includes("sku") || constraint?.includes("hsn")) {
+    return "SKU already exists";
   }
 
-  return 'Record already exists';
+  return "Record already exists";
 }

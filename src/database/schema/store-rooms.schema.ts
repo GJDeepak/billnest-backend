@@ -3,6 +3,7 @@ import {
   boolean, integer, pgTable,
   serial, timestamp, unique,
   varchar, text, pgEnum,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 import { shops } from "./shops.schema.js";
@@ -17,7 +18,8 @@ export const unitTypeEnum = pgEnum("unit_type", [
 export const stockStatusEnum = pgEnum("stock_status", ["in_stock", "low_stock", "out_of_stock"]);
 
 export const storeRooms = pgTable("store_rooms", {
-    id: serial("id").primaryKey(),
+    // id: serial("id").primaryKey(),
+    id: uuid("id").primaryKey().defaultRandom(),
 
     shopId: integer("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
 

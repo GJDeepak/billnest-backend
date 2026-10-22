@@ -1,6 +1,6 @@
 import {
   integer, pgEnum, pgTable,
-  serial, text, timestamp, varchar,
+  serial, text, timestamp, uuid, varchar,
 } from "drizzle-orm/pg-core";
 
 import { products } from "./products.schema.js";
@@ -16,7 +16,8 @@ export const stockMovementType = pgEnum("stock_movement_type", [
 ]);
 
 export const stockMovements = pgTable("stock_movements", {
-  id: serial("id").primaryKey(),
+  // id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
 
   productId: integer("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
 

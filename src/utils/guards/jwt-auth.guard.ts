@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { JwtService } from "@nestjs/jwt";
+import { JsonWebTokenError, JwtService, TokenExpiredError } from "@nestjs/jwt";
 
 import type { Request } from "express";
 
@@ -24,20 +24,22 @@ export class JwtAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
       const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-  
+      
+      
       const authHeader = request.headers.authorization;
-  
+      
       if (!authHeader) {
         throw new UnauthorizedException("Authorization token is required");
       }
-  
+      
       const [type, token] = authHeader.split(" ");
-  
+      
       if (type !== "Bearer" || !token) {
-        throw new UnauthorizedException("Invalid authorization format");
+        throw new UnauthorizedException(`Invalid authorization format ! Expected "Bearer <token>"`);
       }
-      const payload = await this.jwtService.verifyAsync(token);
 
+      const payload = await this.jwtService.verifyAsync(token);
+      
       request.user = {
         userId: payload.userId,
         shopId: payload.shopId,
@@ -45,8 +47,20 @@ export class JwtAuthGuard implements CanActivate {
       };
 
       return true;
-    } catch {
-      throw new UnauthorizedException("Invalid or expired token");
+    } catch (error:any) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+
+      if (error instanceof TokenExpiredError) {
+        throw new UnauthorizedException("Access token has expired");
+      }
+
+      if (error instanceof JsonWebTokenError) {
+        throw new UnauthorizedException("Invalid access token");
+      }
+
+      throw new UnauthorizedException("Token verification failed");
     }
   }
 }

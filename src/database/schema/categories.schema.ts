@@ -5,12 +5,14 @@ import {
   timestamp,
   varchar,
   boolean,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 import { shops } from "./shops.schema.js";
 
 export const categories = pgTable("categories", {
-  id: serial("id").primaryKey(),
+  // id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
 
   shopId: integer("shop_id")
     .notNull()

@@ -1,10 +1,11 @@
-import { integer, pgTable, serial, timestamp } from "drizzle-orm/pg-core";
+import { integer, pgTable, serial, timestamp, uuid } from "drizzle-orm/pg-core";
 
 import { products } from "./products.schema.js";
 import { branches } from "./branches.schema.js";
 
 export const inventory = pgTable("inventory", {
-  id: serial("id").primaryKey(),
+  // id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
 
   productId: integer("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
 

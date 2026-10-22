@@ -1,12 +1,13 @@
 import {
   boolean, integer, pgTable, serial,
-  text, timestamp, varchar,
+  text, timestamp, uuid, varchar,
 } from "drizzle-orm/pg-core";
 
 import { shops } from "./shops.schema.js";
 
 export const branches = pgTable("branches", {
-  id: serial("id").primaryKey(),
+  // id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
 
   shopId: integer("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
 

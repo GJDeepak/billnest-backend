@@ -2,6 +2,7 @@ import {
   IsBoolean,
   IsEmail,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   MinLength,
@@ -22,6 +23,14 @@ export class SignupDto {
   @IsString()
   @MinLength(6)
   password: string;
+
+  @IsNumber()
+  // @MinLength(7)
+  mobile: number;
+
+  @IsString()
+  @IsOptional()
+  countryCode: string;
 
   @IsString()
   @IsOptional()

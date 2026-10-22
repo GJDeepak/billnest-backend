@@ -10,6 +10,7 @@ import { AuthModule } from "./api/auth/auth.module.js";
 import { DatabaseModule } from "./database/database.module.js";
 import { ProductsModule } from "./api/products/products.module.js";
 import { CategoriesModule } from "./api/categories/categories.module.js";
+import { BusinessModule } from './api/business/business.module.js';
 
 // export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -34,6 +35,7 @@ import { CategoriesModule } from "./api/categories/categories.module.js";
     AuthModule,
     ProductsModule,
     CategoriesModule,
+    BusinessModule,
   ],
   controllers: [AppController],
   providers: [AppService],

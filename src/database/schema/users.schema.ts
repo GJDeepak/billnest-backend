@@ -1,4 +1,4 @@
-import { pgTable, pgEnum, serial, varchar, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, pgEnum, serial, varchar, boolean, integer, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const userRoleEnum = pgEnum("user_role", [
   "admin", "user", "vendor",
@@ -10,7 +10,8 @@ export const businessTypeEnum = pgEnum("business_type", [
 ]);
 
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+  // id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
 
   shopName: varchar("shop_name", { length: 100 }).notNull(),
 
@@ -19,6 +20,9 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 150 }).notNull().unique(),
 
   password: varchar("password", { length: 255 }).notNull(),
+
+  mobile: integer("mobile").notNull(),
+  countryCode: varchar("country_code", { length: 5 }).default("+91"),
 
   businessType: businessTypeEnum("business_type").default("other"),
 
