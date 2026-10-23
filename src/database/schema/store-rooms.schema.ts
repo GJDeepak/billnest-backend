@@ -19,11 +19,14 @@ export const stockStatusEnum = pgEnum("stock_status", ["in_stock", "low_stock", 
 
 export const storeRooms = pgTable("store_rooms", {
     // id: serial("id").primaryKey(),
+    // shopId: integer("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
+    // branchId: integer("branch_id").notNull().references(() => branches.id, { onDelete: "cascade" }),
+
     id: uuid("id").primaryKey().defaultRandom(),
-
-    shopId: integer("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
-
-    branchId: integer("branch_id").notNull().references(() => branches.id, { onDelete: "cascade" }),
+    
+    shopId: uuid("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
+    
+    branchId: uuid("branch_id").notNull().references(() => branches.id, { onDelete: "cascade" }),
 
     name: varchar("name", { length: 150 }).notNull(),
 

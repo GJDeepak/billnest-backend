@@ -7,9 +7,11 @@ import { shops } from "./shops.schema.js";
 
 export const branches = pgTable("branches", {
   // id: serial("id").primaryKey(),
+  // shopId: integer("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
+
   id: uuid("id").primaryKey().defaultRandom(),
 
-  shopId: integer("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
+  shopId: uuid("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
 
   branchName: varchar("branch_name", { length: 150 }).notNull(),
 

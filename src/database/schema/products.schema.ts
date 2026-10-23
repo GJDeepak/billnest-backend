@@ -15,13 +15,17 @@ export const stockStatusEnum = pgEnum("stock_status", [
 
 export const products = pgTable("products", {
   // id: serial("id").primaryKey(),
+  // shopId: integer("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
+  // branchId: integer("branch_id").notNull().references(() => branches.id, { onDelete: "cascade" }),
+  // categoryId: integer("category_id").references(() => categories.id, { onDelete: "set null" }),
+
   id: uuid("id").primaryKey().defaultRandom(),
 
-  shopId: integer("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
+  shopId: uuid("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
 
-  branchId: integer("branch_id").notNull().references(() => branches.id, { onDelete: "cascade" }),
+  branchId: uuid("branch_id").notNull().references(() => branches.id, { onDelete: "cascade" }),
 
-  categoryId: integer("category_id").references(() => categories.id, { onDelete: "set null" }),
+  categoryId: uuid("category_id").references(() => categories.id, { onDelete: "set null" }),
 
   name: varchar("name", { length: 150 }).notNull(),
 

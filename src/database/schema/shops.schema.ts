@@ -25,9 +25,11 @@ export const paymentMethodEnum = pgEnum("payment_method", ["cash", "card", "onli
 
 export const shops = pgTable("shops", {
   // id: serial("id").primaryKey(),
+  // userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+
   id: uuid("id").primaryKey().defaultRandom(),
 
-  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
 
   shopName: varchar("shop_name", { length: 150 }).notNull(),
   mobile: integer("mobile").notNull(),

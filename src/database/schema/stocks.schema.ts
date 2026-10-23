@@ -22,13 +22,17 @@ export const adjustmentTypeEnum = pgEnum("adjustment_type", ["added", "removed",
 
 export const stocks = pgTable("stocks", {
     // id: serial("id").primaryKey(),
+    // shopId: integer("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
+    // branchId: integer("branch_id").notNull().references(() => branches.id, { onDelete: "cascade" }),
+    // productId: integer("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+
     id: uuid("id").primaryKey().defaultRandom(),
 
-    shopId: integer("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
+    shopId: uuid("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
 
-    branchId: integer("branch_id").notNull().references(() => branches.id, { onDelete: "cascade" }),
+    branchId: uuid("branch_id").notNull().references(() => branches.id, { onDelete: "cascade" }),
 
-    productId: integer("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+    productId: uuid("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
 
     quantity: numeric("quantity", { precision: 14, scale: 3 }).notNull().default("0"),
     

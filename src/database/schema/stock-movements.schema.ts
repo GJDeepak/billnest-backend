@@ -17,11 +17,14 @@ export const stockMovementType = pgEnum("stock_movement_type", [
 
 export const stockMovements = pgTable("stock_movements", {
   // id: serial("id").primaryKey(),
+  // productId: integer("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  // branchId: integer("branch_id").notNull().references(() => branches.id, { onDelete: "cascade" }),
+
   id: uuid("id").primaryKey().defaultRandom(),
 
-  productId: integer("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  productId: uuid("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
 
-  branchId: integer("branch_id").notNull().references(() => branches.id, { onDelete: "cascade" }),
+  branchId: uuid("branch_id").notNull().references(() => branches.id, { onDelete: "cascade" }),
 
   source: stockMovementType("source").default("new_stock"),
 
