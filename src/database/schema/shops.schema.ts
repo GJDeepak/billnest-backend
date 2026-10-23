@@ -16,10 +16,7 @@ export const billSizeEnum = pgEnum("bill_size", [
   "termal_58mm", "termal_80mm",
 ]);
 
-export const invoiceTypeEnum = pgEnum("bill_size", [
-  "A4", "A5", "A6",
-  "termal_58mm", "termal_80mm",
-]);
+export const invoiceTypeEnum = pgEnum("invoice_type", ["A4", "A5", "A6"]);
 
 export const paymentMethodEnum = pgEnum("payment_method", ["cash", "card", "online", "upi"]);
 
@@ -40,7 +37,7 @@ export const shops = pgTable("shops", {
   billStartNumber: integer("bill_start_number").default(1),
   billPrefix: varchar("bill_prefix", { length: 25 }),
   billSize: billSizeEnum("bill_size").default("termal_58mm"),
-  invoiceType: billSizeEnum("invoice_type").default("A4"),
+  invoiceType: invoiceTypeEnum("invoice_type").default("A4"),
 
   businessType: businessTypeEnum("business_type").default("other"),
   paymentMethod: paymentMethodEnum("payment_method").default("cash"),

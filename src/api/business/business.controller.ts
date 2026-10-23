@@ -14,7 +14,7 @@ import { BusinessSetupDto } from "./dto/business-setup.dto.js";
 
 type AuthenticatedRequest = Request & {
   user: {
-    userId: number;
+    userId: string;
     email: string;
   };
 };
@@ -27,16 +27,16 @@ export class BusinessController {
   ) {}
 
   @Post("setup")
-  create(
+  setupBusiness(
     @Req() req: AuthenticatedRequest,
     @Body() dto: BusinessSetupDto,
   ) {
-    return this.businessService.create(req.user.userId, dto);
+    return this.businessService.setupBusiness(req.user.userId, dto);
   }
 
-  @Get()
-  getMyBusiness(@Req() req: AuthenticatedRequest) {
-    return this.businessService.getMyBusiness(req.user.userId);
-  }
+  // @Get()
+  // getMyBusiness(@Req() req: AuthenticatedRequest) {
+  //   return this.businessService.getMyBusiness(req.user.userId);
+  // }
 }
 
