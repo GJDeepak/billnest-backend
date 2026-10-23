@@ -30,7 +30,7 @@ export const users = pgTable("users", {
   city: varchar("city", { length: 255 }),
   state: varchar("state", { length: 255 }),
   country: varchar("country", { length: 255 }),
-  location: varchar("location", { length: 255 }),
+  address: varchar("address", { length: 255 }),
   pincode: varchar("pincode", { length: 255 }),
 
   termsAccepted: boolean("terms_accepted").default(false),

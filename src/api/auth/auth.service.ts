@@ -43,7 +43,7 @@ export class AuthService {
         ...(dto.city && {city: dto.city}),
         ...(dto.state && {state: dto.state}),
         ...(dto.country && {country: dto.country}),
-        ...(dto.location && {location: dto.location}),
+        ...(dto.address && {address: dto.address}),
       };
 
       const insertUserData = {
@@ -98,6 +98,7 @@ export class AuthService {
       });
 
     return {
+      success: true,
       message: "Signup successful",
       ...result,
       accessToken,
@@ -145,6 +146,7 @@ export class AuthService {
       });
       
       return {
+        success: true,
         message: "Signin successful",
         user: {
           id: user.id,
@@ -188,6 +190,7 @@ export class AuthService {
       });
   
       return {
+        success: true,
         message: "Password reset successful",
         user: {
           id: user.id,

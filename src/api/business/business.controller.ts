@@ -1,10 +1,6 @@
 import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Req,
-  UseGuards,
+  Body, Controller, Get,
+  Post, Req, UseGuards,
 } from "@nestjs/common";
 import type { Request } from "express";
 
@@ -15,7 +11,6 @@ import { BusinessSetupDto } from "./dto/business-setup.dto.js";
 type AuthenticatedRequest = Request & {
   user: {
     userId: string;
-    email: string;
   };
 };
 
@@ -34,9 +29,9 @@ export class BusinessController {
     return this.businessService.setupBusiness(req.user.userId, dto);
   }
 
-  // @Get()
-  // getMyBusiness(@Req() req: AuthenticatedRequest) {
-  //   return this.businessService.getMyBusiness(req.user.userId);
-  // }
+  @Get("details")
+  getMyBusinessByUserId(@Req() req: AuthenticatedRequest) {
+    return this.businessService.getMyBusinessByUserId(req.user.userId);
+  }
 }
 

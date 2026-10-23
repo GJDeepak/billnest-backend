@@ -54,7 +54,7 @@ export class SignupDto {
   
   @IsString()
   @IsOptional()
-  location: string;
+  address: string;
 
   @IsBoolean()
   @IsOptional()

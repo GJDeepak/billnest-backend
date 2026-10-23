@@ -45,7 +45,7 @@ export const shops = pgTable("shops", {
   city: varchar("city", { length: 255 }),
   state: varchar("state", { length: 255 }),
   country: varchar("country", { length: 255 }),
-  location: varchar("location", { length: 255 }),
+  address: varchar("address", { length: 255 }),
   
   businessSetup: boolean("business_setup").default(false),
   isActive: boolean("is_active").default(true),

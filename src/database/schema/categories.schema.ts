@@ -1,12 +1,5 @@
-import {
-  integer,
-  pgTable,
-  serial,
-  timestamp,
-  varchar,
-  boolean,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { pgTable, timestamp, varchar, boolean, uuid, uniqueIndex } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm"
 
 import { shops } from "./shops.schema.js";
 
@@ -22,9 +15,18 @@ export const categories = pgTable("categories", {
   
   description: varchar("description", { length: 255 }),
 
-  status: boolean("status").default(true),
+  isActive: boolean("is_active").default(true),
+  
+  isDeleted: boolean("is_deleted").default(false),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
 
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+},
+(table) => [
+    uniqueIndex("categories_shop_name_lower_unique").on(
+      table.shopId,
+      sql`lower(${table.name})`,
+    ),
+  ],
+);

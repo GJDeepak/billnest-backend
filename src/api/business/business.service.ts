@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, Inject } from "@nestjs/common";
+import { ConflictException, Injectable, Inject, NotFoundException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
 
 import { DATABASE } from "../../database/database.module.js";
@@ -26,35 +26,24 @@ export class BusinessService {
       
       const [updatedShop] = await this.db.update(shops).set(updateData).where(eq(shops.userId, userId)).returning();
       
-      return { updatedShop, message: "Business setup completed successfully" };
+      return { success: true, updatedShop, message: "Business setup completed successfully" };
     } catch (error) {
       handleDatabaseError(error);
     }
   }
 
-  // async getMyBusiness(userId: number) {
-  //   const [shop] = await this.db
-  //     .select()
-  //     .from(shops)
-  //     .where(eq(shops.userId, userId))
-  //     .limit(1);
-
-  //   if (!shop) {
-  //     return {
-  //       message: "Business setup has not been completed",
-  //       business: null,
-  //     };
-  //   }
-
-  //   const shopBranches = await this.db
-  //     .select()
-  //     .from(branches)
-  //     .where(eq(branches.shopId, shop.id));
-
-  //   return {
-  //     business: shop,
-  //     branches: shopBranches,
-  //   };
-  // }
+  async getMyBusinessByUserId(userId: string) {
+    try {
+      const [shop] = await this.db.select().from(shops).where(eq(shops.userId, userId)).limit(1);
+  
+      if (!shop) throw new NotFoundException("Business details not found for the given user ID");
+  
+      const shopBranches = await this.db.select().from(branches).where(eq(branches.shopId, shop.id));
+  
+      return { success: true, business: shop, branches: shopBranches, message: "Business details fetched successfully" };
+    } catch (error) {
+      handleDatabaseError(error);
+    }
+  }
 }
 

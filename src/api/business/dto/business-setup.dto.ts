@@ -1,5 +1,4 @@
-
-import { IsNotEmpty, IsNumber, IsOptional, IsString, Matches, MaxLength, MinLength } from "class-validator";
+import { IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength } from "class-validator";
 
 export class BusinessSetupDto {
   @IsString()
@@ -50,7 +49,7 @@ export class BusinessSetupDto {
   @IsOptional()
   @IsString()
   @MaxLength(255)
-  location: string;
+  adress: string;
 
   @IsOptional()
   @IsString()

@@ -21,7 +21,7 @@ export const branches = pgTable("branches", {
 
   country: varchar("country", { length: 100 }).notNull(),
 
-  location: text("location"),
+  address: text("address"),
 
   isDefault: boolean("is_default").notNull().default(false),
 
