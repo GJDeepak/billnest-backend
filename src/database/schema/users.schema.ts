@@ -21,7 +21,7 @@ export const users = pgTable("users", {
 
   password: varchar("password", { length: 255 }).notNull(),
 
-  mobile: integer("mobile").notNull(),
+  mobile: varchar("mobile").notNull(),
   countryCode: varchar("country_code", { length: 5 }).default("+91"),
 
   businessType: businessTypeEnum("business_type").default("other"),

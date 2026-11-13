@@ -29,7 +29,7 @@ export const shops = pgTable("shops", {
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
 
   shopName: varchar("shop_name", { length: 150 }).notNull(),
-  mobile: integer("mobile").notNull(),
+  mobile: varchar("mobile").notNull(),
   countryCode: varchar("country_code", { length: 5 }).default("+91"),
 
   pincode: varchar("pincode", { length: 10 }),

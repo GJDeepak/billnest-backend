@@ -10,9 +10,10 @@ import { AuthModule } from "./api/auth/auth.module.js";
 import { DatabaseModule } from "./database/database.module.js";
 import { ProductsModule } from "./api/products/products.module.js";
 import { CategoriesModule } from "./api/categories/categories.module.js";
-import { BusinessModule } from './api/business/business.module.js';
-import { UsersModule } from './api/users/users.module.js';
-import { ShopsModule } from './api/shops/shops.module.js';
+import { BusinessModule } from "./api/business/business.module.js";
+import { UsersModule } from "./api/users/users.module.js";
+import { ShopsModule } from "./api/shops/shops.module.js";
+import { VendorsModule } from "./api/vendors/vendors.module.js";
 
 // export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -40,6 +41,7 @@ import { ShopsModule } from './api/shops/shops.module.js';
     BusinessModule,
     UsersModule,
     ShopsModule,
+    VendorsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
