@@ -41,7 +41,8 @@ export const products = pgTable("products", {
 
   sellingPrice: numeric("selling_price", { precision: 12, scale: 2 }).notNull(),
 
-  isActive: boolean("is_active").notNull().default(true),
+  isActive: boolean("is_active").default(true),
+  isDeleted: boolean("is_deleted").default(false),
 
   stockStatus: stockStatusEnum("stock_status").default("in_stock"),
 

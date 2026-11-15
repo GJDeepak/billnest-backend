@@ -49,6 +49,8 @@ export const shops = pgTable("shops", {
   
   businessSetup: boolean("business_setup").default(false),
   isActive: boolean("is_active").default(true),
+  
+  isDeleted: boolean("is_deleted").default(false),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
 

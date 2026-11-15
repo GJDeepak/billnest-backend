@@ -42,6 +42,8 @@ export const storeRooms = pgTable("store_rooms", {
 
     isActive: boolean("is_active").notNull().default(true),
 
+    isDeleted: boolean("is_deleted").default(false),
+
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

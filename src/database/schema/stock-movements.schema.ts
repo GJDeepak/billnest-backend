@@ -1,5 +1,5 @@
 import {
-  integer, pgEnum, pgTable,
+  integer, pgEnum, pgTable, boolean,
   serial, text, timestamp, uuid, varchar,
 } from "drizzle-orm/pg-core";
 
@@ -34,6 +34,8 @@ export const stockMovements = pgTable("stock_movements", {
 
   reason: text("reason"),
   note: text("note"),
+
+  isDeleted: boolean("is_deleted").default(false),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

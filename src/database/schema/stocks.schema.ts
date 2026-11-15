@@ -3,7 +3,7 @@ import {
   check, integer, numeric,
   pgEnum, pgTable, serial,
   text, timestamp, unique,
-  uuid,
+  uuid, boolean,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -38,6 +38,8 @@ export const stocks = pgTable("stocks", {
     
     reason: text("reason"),
     note: text("note"),
+
+    isDeleted: boolean("is_deleted").default(false),
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),

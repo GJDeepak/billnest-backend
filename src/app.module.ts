@@ -14,6 +14,7 @@ import { BusinessModule } from "./api/business/business.module.js";
 import { UsersModule } from "./api/users/users.module.js";
 import { ShopsModule } from "./api/shops/shops.module.js";
 import { VendorsModule } from "./api/vendors/vendors.module.js";
+import { StaffModule } from './api/staff/staff.module.js';
 
 // export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -42,6 +43,7 @@ import { VendorsModule } from "./api/vendors/vendors.module.js";
     UsersModule,
     ShopsModule,
     VendorsModule,
+    StaffModule,
   ],
   controllers: [AppController],
   providers: [AppService],

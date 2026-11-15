@@ -35,6 +35,8 @@ export const users = pgTable("users", {
 
   termsAccepted: boolean("terms_accepted").default(false),
 
+  isDeleted: boolean("is_deleted").default(false),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
 
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
