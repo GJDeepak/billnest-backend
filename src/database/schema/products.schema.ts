@@ -13,6 +13,8 @@ export const stockStatusEnum = pgEnum("stock_status", [
   "out_of_stock", "blocked",
 ]);
 
+export const productTypeEnum = pgEnum("product_type", ["retail", "wholesale"])
+
 export const products = pgTable("products", {
   // id: serial("id").primaryKey(),
   // shopId: integer("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
@@ -29,17 +31,23 @@ export const products = pgTable("products", {
 
   name: varchar("name", { length: 150 }).notNull(),
 
-  note: varchar("name", { length: 150 }).notNull(),
+  note: varchar("note", { length: 250 }).notNull(),
 
   productCode: varchar("product_code", { length: 50 }),
 
   hsnCode: varchar("hsn_code", { length: 20 }),
 
+  productType: productTypeEnum("product_type").default("retail"),
+
   gstRate: numeric("gst_rate", { precision: 5, scale: 2 }).default("0"),
 
-  purchasePrice: numeric("purchase_price", { precision: 12, scale: 2 }),
+  purchasePrice: numeric("purchase_price", { precision: 12, scale: 2 }).default("0"),
 
-  sellingPrice: numeric("selling_price", { precision: 12, scale: 2 }).notNull(),
+  sellingPrice: numeric("selling_price", { precision: 12, scale: 2 }).default("0"),
+
+  // wholesalePrice: numeric("wholesale_price", { precision: 12, scale: 2 }),
+
+  // mrp: numeric("mrp", { precision: 12, scale: 2 }),
 
   isActive: boolean("is_active").default(true),
   isDeleted: boolean("is_deleted").default(false),

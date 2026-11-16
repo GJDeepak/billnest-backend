@@ -1,7 +1,12 @@
-import { integer, pgTable, serial, timestamp, uuid, boolean } from "drizzle-orm/pg-core";
+import { integer, pgTable, serial, timestamp, uuid, boolean, pgEnum, numeric } from "drizzle-orm/pg-core";
 
 import { products } from "./products.schema.js";
 import { branches } from "./branches.schema.js";
+
+export const productUnitsEnum = pgEnum("unit", [
+  "kg", "g", "mg", "l", "ml", "pcs",
+  "box", "pack", "dozen", "bottle",
+]);
 
 export const inventory = pgTable("inventory", {
   // id: serial("id").primaryKey(),
@@ -14,7 +19,9 @@ export const inventory = pgTable("inventory", {
 
   branchId: uuid("branch_id").notNull().references(() => branches.id, { onDelete: "cascade" }),
 
-  quantity: integer("quantity").notNull().default(0),
+  quantity: numeric("quantity", { precision: 14, scale: 3 }).default("0"),
+  
+  unit: productUnitsEnum("unit").default("pcs"),
 
   isDeleted: boolean("is_deleted").default(false),
 
