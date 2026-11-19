@@ -34,7 +34,8 @@ export class CreateProductDto {
   @MaxLength(20)
   hsnCode?: string;
 
-  @IsOptional()
+  // @IsOptional()
+  @IsNotEmpty()
   @IsString()
   productType: string;
 
