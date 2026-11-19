@@ -13,7 +13,11 @@ import { PartialType } from "@nestjs/mapped-types";
 export class CreateProductDto {
   @IsOptional()
   @IsUUID()
-  categoryId?: string | null;
+  branchId?: string | null;
+
+  // @IsOptional()
+  @IsUUID()
+  categoryId: string;
 
   @IsString()
   @IsNotEmpty()
@@ -31,24 +35,43 @@ export class CreateProductDto {
   hsnCode?: string;
 
   @IsOptional()
+  @IsString()
+  productType: string;
+
+  @IsOptional()
   @IsNumberString()
   gstRate?: string;
 
   @IsOptional()
   @IsNumberString()
   purchasePrice?: string;
-
+  
   @IsOptional()
   @IsNumberString()
   sellingPrice?: string;
-
+  
   @IsOptional()
   @IsString()
   note?: string;
 
   @IsOptional()
+  @IsNumberString()
+  quantity?: string;
+
+  @IsOptional()
+  @IsString()
+  unit?: string;
+
+  @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+  @IsOptional()
+  @IsBoolean()
+  isDeleted?: boolean;
+
+  @IsOptional()
+  @IsString()
+  stockStatus?: string;
 }
 
 export class UpdateProductDto extends PartialType(CreateProductDto) {}

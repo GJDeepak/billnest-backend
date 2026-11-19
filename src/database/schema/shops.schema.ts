@@ -30,29 +30,29 @@ export const shops = pgTable("shops", {
 
   shopName: varchar("shop_name", { length: 150 }).notNull(),
   mobile: varchar("mobile").notNull(),
-  countryCode: varchar("country_code", { length: 5 }).default("+91"),
+  countryCode: varchar("country_code", { length: 5 }).notNull().default("+91"),
 
   pincode: varchar("pincode", { length: 10 }),
   gstNumber: varchar("gst_number", { length: 25 }),
-  billStartNumber: integer("bill_start_number").default(1),
+  billStartNumber: integer("bill_start_number").notNull().default(1),
   billPrefix: varchar("bill_prefix", { length: 25 }),
-  billSize: billSizeEnum("bill_size").default("termal_58mm"),
-  invoiceType: invoiceTypeEnum("invoice_type").default("A4"),
+  billSize: billSizeEnum("bill_size").notNull().default("termal_58mm"),
+  invoiceType: invoiceTypeEnum("invoice_type").notNull().default("A4"),
 
-  businessType: businessTypeEnum("business_type").default("other"),
-  paymentMethod: paymentMethodEnum("payment_method").default("cash"),
+  businessType: businessTypeEnum("business_type").notNull().default("other"),
+  paymentMethod: paymentMethodEnum("payment_method").notNull().default("cash"),
   
   city: varchar("city", { length: 255 }),
   state: varchar("state", { length: 255 }),
   country: varchar("country", { length: 255 }),
   address: varchar("address", { length: 255 }),
   
-  businessSetup: boolean("business_setup").default(false),
-  isActive: boolean("is_active").default(true),
+  businessSetup: boolean("business_setup").notNull().default(false),
+  isActive: boolean("is_active").notNull().default(true),
   
-  isDeleted: boolean("is_deleted").default(false),
+  isDeleted: boolean("is_deleted").notNull().default(false),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow().notNull(),
 
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().notNull(),
 });

@@ -32,8 +32,8 @@ export const staffAttendance = pgTable("staff_attendance", {
 
     note: text("note"),
 
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow().notNull(),
 },
 (table) => [
     uniqueIndex("staff_attendance_date_unique").on(

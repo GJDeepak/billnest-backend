@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  HttpException,
   InternalServerErrorException,
   ServiceUnavailableException,
 } from "@nestjs/common";
@@ -10,6 +11,33 @@ interface DatabaseError {
   detail?: string;
   constraint?: string;
   message?: string;
+  table?: string;
+  schema?: string;
+  column?: string;
+  severity?: string;
+  cause?: unknown;
+}
+
+/**
+ * Extracts the actual PostgreSQL error
+ * from Drizzle or nested errors.
+ */
+function getDatabaseError(error: unknown): DatabaseError {
+  let current: unknown = error;
+
+  while (current && typeof current === "object") {
+    const dbError = current as DatabaseError;
+
+    // PostgreSQL error found
+    if (dbError.code) {
+      return dbError;
+    }
+
+    // Move to nested cause
+    current = dbError.cause;
+  }
+
+  return {};
 }
 
 /**
@@ -17,109 +45,111 @@ interface DatabaseError {
  * into proper NestJS HTTP exceptions.
  */
 export function handleDatabaseError(error: unknown): never {
-  const dbError = error as DatabaseError;
 
+  // 1. Preserve existing NestJS HTTP exceptions
+  if (error instanceof HttpException) {
+    throw error;
+  }
+
+  // 2. Extract actual PostgreSQL error
+  const dbError = getDatabaseError(error);
+
+  const errorMessage = dbError.detail ?? dbError.message ?? "Database operation failed";
+
+  // 3. Handle PostgreSQL errors
   switch (dbError.code) {
+
     /**
-     * PostgreSQL:
      * 23505 = unique_violation
-     *
-     * Example:
-     * - Duplicate email
-     * - Duplicate SKU
      */
     case "23505":
       throw new ConflictException(getUniqueViolationMessage(dbError));
 
     /**
-     * PostgreSQL:
      * 23503 = foreign_key_violation
-     *
-     * Example:
-     * - Invalid vendorId
-     * - Invalid productId
      */
     case "23503":
-      throw new BadRequestException(dbError.message || "Referenced record does not exist");
+      throw new BadRequestException("Referenced record does not exist");
 
     /**
-     * PostgreSQL:
      * 23502 = not_null_violation
-     *
-     * Example:
-     * Required database field is missing.
      */
     case "23502":
-      throw new BadRequestException(dbError.message || "Required field is missing");
+      throw new BadRequestException("Required field is missing");
 
     /**
-     * PostgreSQL:
      * 23514 = check_violation
-     *
-     * Example:
-     * - Negative price
-     * - Invalid stock quantity
      */
     case "23514":
       throw new BadRequestException("Invalid data provided");
 
     /**
-     * PostgreSQL:
      * 22P02 = invalid_text_representation
-     *
-     * Example:
-     * Trying to use "abc" where PostgreSQL expects an integer.
      */
     case "22P02":
-      throw new BadRequestException(dbError.message || "Invalid data format");
+      throw new BadRequestException("Invalid data format");
 
     /**
-     * PostgreSQL:
      * 22003 = numeric_value_out_of_range
      */
     case "22003":
       throw new BadRequestException("Numeric value is out of range");
 
     /**
-     * PostgreSQL:
      * 40001 = serialization_failure
-     *
-     * Usually caused by concurrent transactions.
      */
     case "40001":
-      throw new ServiceUnavailableException(dbError.message || "Transaction could not be completed. Please try again");
+      throw new ServiceUnavailableException("Transaction could not be completed. Please try again");
 
     /**
-     * PostgreSQL:
      * 40P01 = deadlock_detected
      */
     case "40P01":
-      throw new ServiceUnavailableException(dbError.message || "Database transaction conflict. Please try again");
+      throw new ServiceUnavailableException("Database transaction conflict. Please try again");
 
     /**
      * Unknown database error
      */
     default:
-      console.error("Database error:", JSON.stringify(dbError));
-      throw new InternalServerErrorException(dbError.message || "Database operation failed");
+      console.error("Database Error:", {
+        code: dbError.code,
+        message: dbError.message,
+        detail: dbError.detail,
+        constraint: dbError.constraint,
+        table: dbError.table,
+        schema: dbError.schema,
+        column: dbError.column,
+        originalError: error,
+      });
+
+      throw new InternalServerErrorException("Database operation failed");
   }
 }
 
 /**
- * Creates a better message for duplicate records.
+ * Creates meaningful messages for duplicate records.
  */
-function getUniqueViolationMessage(
-  error: DatabaseError,
-): string {
+function getUniqueViolationMessage(error: DatabaseError): string {
   const constraint = error.constraint?.toLowerCase();
 
-  if (constraint?.includes("email")) {
-    return "Email already exists";
+  if (!constraint) {
+    return "Record already exists";
   }
 
-  if (constraint?.includes("sku") || constraint?.includes("hsn")) {
-    return "SKU already exists";
-  }
+  switch (true) {
+    case constraint.includes("email"):
+      return "Email already exists";
 
-  return "Record already exists";
+    case constraint.includes("sku"):
+      return "SKU code already exists";
+
+    case constraint.includes("hsn"):
+      return "HSN code already exists";
+
+    case constraint === "products_shop_product_code_unique":
+      return "Product Code or Product is duplicated";
+
+    default:
+      return "Record already exists";
+  }
 }

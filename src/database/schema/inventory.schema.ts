@@ -2,6 +2,7 @@ import { integer, pgTable, serial, timestamp, uuid, boolean, pgEnum, numeric } f
 
 import { products } from "./products.schema.js";
 import { branches } from "./branches.schema.js";
+import { shops } from "./shops.schema.js";
 
 export const productUnitsEnum = pgEnum("unit", [
   "kg", "g", "mg", "l", "ml", "pcs",
@@ -17,15 +18,17 @@ export const inventory = pgTable("inventory", {
 
   productId: uuid("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
 
-  branchId: uuid("branch_id").notNull().references(() => branches.id, { onDelete: "cascade" }),
+  shopId: uuid("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
 
-  quantity: numeric("quantity", { precision: 14, scale: 3 }).default("0"),
+  branchId: uuid("branch_id").references(() => branches.id, { onDelete: "cascade" }),
+
+  quantity: numeric("quantity", { precision: 14, scale: 3 }).notNull().default("0"),
   
-  unit: productUnitsEnum("unit").default("pcs"),
+  unit: productUnitsEnum("unit").notNull().default("pcs"),
 
-  isDeleted: boolean("is_deleted").default(false),
+  isDeleted: boolean("is_deleted").notNull().default(false),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow().notNull(),
 
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().notNull(),
 });

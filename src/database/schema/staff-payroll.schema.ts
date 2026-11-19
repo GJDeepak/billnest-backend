@@ -20,24 +20,24 @@ export const staffPayroll = pgTable("staff_payroll", {
 
     basicSalary: numeric("basic_salary", { precision: 12, scale: 2 }).notNull(),
 
-    allowances: numeric("allowances", { precision: 12, scale: 2 }).default("0"),
+    allowances: numeric("allowances", { precision: 12, scale: 2 }).notNull().default("0"),
 
-    deductions: numeric("deductions", { precision: 12, scale: 2 }).default("0"),
+    deductions: numeric("deductions", { precision: 12, scale: 2 }).notNull().default("0"),
 
-    advanceDeduction: numeric("advance_deduction", { precision: 12, scale: 2 }).default("0"),
+    advanceDeduction: numeric("advance_deduction", { precision: 12, scale: 2 }).notNull().default("0"),
 
     netSalary: numeric("net_salary", { precision: 12, scale: 2 }),
 
-    paidAmount: numeric("paid_amount", { precision: 12, scale: 2 }).default("0").notNull(),
+    paidAmount: numeric("paid_amount", { precision: 12, scale: 2 }).notNull().default("0").notNull(),
 
     paymentDate: date("payment_date"),
 
-    status: payrollStatusEnum("status").default("pending"),
+    status: payrollStatusEnum("status").notNull().default("pending"),
 
     note: text("note"),
 
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow().notNull(),
 },
 (table) => [
     uniqueIndex("staff_payroll_month_unique").on(

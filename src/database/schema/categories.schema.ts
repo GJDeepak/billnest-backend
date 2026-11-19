@@ -15,13 +15,13 @@ export const categories = pgTable("categories", {
   
   description: varchar("description", { length: 255 }),
 
-  isActive: boolean("is_active").default(true),
+  isActive: boolean("is_active").notNull().default(true),
   
-  isDeleted: boolean("is_deleted").default(false),
+  isDeleted: boolean("is_deleted").notNull().default(false),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow().notNull(),
 
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().notNull(),
 },
 (table) => [
     uniqueIndex("categories_shop_name_lower_unique").on(

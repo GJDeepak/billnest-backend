@@ -26,18 +26,18 @@ export const stockMovements = pgTable("stock_movements", {
 
   branchId: uuid("branch_id").notNull().references(() => branches.id, { onDelete: "cascade" }),
 
-  source: stockMovementType("source").default("new_stock"),
+  source: stockMovementType("source").notNull().default("new_stock"),
 
-  quantity: integer("quantity").default(0),
+  quantity: integer("quantity").notNull().default(0),
 
   referenceId: integer("reference_id"),
 
   reason: text("reason"),
   note: text("note"),
 
-  isDeleted: boolean("is_deleted").default(false),
+  isDeleted: boolean("is_deleted").notNull().default(false),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().notNull(),
   updatedBy: varchar("updated_by", { length: 100 }),
 });

@@ -38,11 +38,11 @@ export const staffLeaves = pgTable("staff_leaves", {
 
   reason: text("reason"),
 
-  status: leaveStatusEnum("status").default("pending").notNull(),
+  status: leaveStatusEnum("status").notNull().default("pending").notNull(),
 
   approvedBy: uuid("approved_by"),
   approvedAt: timestamp("approved_at"),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().notNull(),
 });

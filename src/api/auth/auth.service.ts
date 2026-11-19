@@ -148,11 +148,7 @@ export class AuthService {
       return {
         success: true,
         message: "Signin successful",
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        },
+        user: { id: user.id, name: user.name, email: user.email },
         accessToken: token,
       };
     } catch (error: unknown) {
@@ -192,11 +188,7 @@ export class AuthService {
       return {
         success: true,
         message: "Password reset successful",
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        },
+        user: { id: user.id, name: user.name, email: user.email },
         accessToken: token,
       };
     } catch (error: unknown) {

@@ -39,10 +39,10 @@ export const stocks = pgTable("stocks", {
     reason: text("reason"),
     note: text("note"),
 
-    isDeleted: boolean("is_deleted").default(false),
+    isDeleted: boolean("is_deleted").notNull().default(false),
 
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow().notNull(),
 },
 (table) => [
     unique("stocks_branch_product_unique").on(

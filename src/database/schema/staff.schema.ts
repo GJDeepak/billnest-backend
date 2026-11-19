@@ -24,20 +24,20 @@ export const staff = pgTable("staff", {
   mobile: varchar("mobile", { length: 20 }).notNull(),
   email: varchar("email", { length: 150 }),
 
-  role: staffRoleEnum("role").default("sales_staff").notNull(),
+  role: staffRoleEnum("role").notNull().default("sales_staff").notNull(),
 
-  joiningDate: date("joining_date").notNull(),
+  joiningDate: date("joining_date").notNull().notNull(),
 
   monthlySalary: numeric("monthly_salary", { precision: 12, scale: 2 }).notNull(),
 
-  status: staffStatusEnum("status").default("active").notNull(),
+  status: staffStatusEnum("status").notNull().default("active").notNull(),
 
-  dutyStatus: dutyStatusEnum("duty_status").default("on_duty").notNull(),
+  dutyStatus: dutyStatusEnum("duty_status").notNull().default("on_duty").notNull(),
 
   address: text("address"),
 
-  isDeleted: boolean("is_deleted").default(false).notNull(),
+  isDeleted: boolean("is_deleted").notNull().default(false).notNull(),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().notNull(),
 });

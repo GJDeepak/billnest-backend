@@ -22,22 +22,22 @@ export const users = pgTable("users", {
   password: varchar("password", { length: 255 }).notNull(),
 
   mobile: varchar("mobile").notNull(),
-  countryCode: varchar("country_code", { length: 5 }).default("+91"),
+  countryCode: varchar("country_code", { length: 5 }).notNull().default("+91"),
 
-  businessType: businessTypeEnum("business_type").default("other"),
+  businessType: businessTypeEnum("business_type").notNull().default("other"),
 
-  userRole: userRoleEnum("user_role").default("user"),
+  userRole: userRoleEnum("user_role").notNull().default("user"),
   city: varchar("city", { length: 255 }),
   state: varchar("state", { length: 255 }),
   country: varchar("country", { length: 255 }),
   address: varchar("address", { length: 255 }),
   pincode: varchar("pincode", { length: 255 }),
 
-  termsAccepted: boolean("terms_accepted").default(false),
+  termsAccepted: boolean("terms_accepted").notNull().default(false),
 
-  isDeleted: boolean("is_deleted").default(false),
+  isDeleted: boolean("is_deleted").notNull().default(false),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow().notNull(),
 
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().notNull(),
 });

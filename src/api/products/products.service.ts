@@ -1,30 +1,18 @@
 
-import {
-  Injectable,
-  Inject,
-  NotFoundException,
-  ConflictException,
-  BadRequestException,
-} from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException, } from "@nestjs/common";
 
-import {
-  and,
-  asc,
-  desc,
-  eq,
-  sql,
-  ilike,
-} from "drizzle-orm";
+import { Inject } from "@nestjs/common";
+import { and, desc, eq, ilike, isNull, sql } from "drizzle-orm";
 
 import { DATABASE } from "../../database/database.module.js";
 import { shops } from "../../database/schema/shops.schema.js";
+import { branches } from "../../database/schema/branches.schema.js";
+
 import { categories } from "../../database/schema/categories.schema.js";
 import { products } from "../../database/schema/products.schema.js";
+import { inventory } from "../../database/schema/inventory.schema.js";
 
-import {
-  CreateProductDto,
-  UpdateProductDto,
-} from "./dto/product.dto.js";
+import { CreateProductDto, UpdateProductDto, } from "./dto/product.dto.js";
 
 import { handleDatabaseError } from "../../utils/errors/database-error.handler.js";
 
@@ -35,200 +23,245 @@ export class ProductsService {
     private readonly db: any,
   ) {}
 
+  // --------------------------------------------------
+  // CHECK SHOP OWNERSHIP
+  // --------------------------------------------------
+
   private async checkShop(userId: string, shopId: string) {
+    
     const [shop] = await this.db
       .select({ id: shops.id })
       .from(shops)
-      .where(
-        and(
-          eq(shops.id, shopId),
-          eq(shops.userId, userId),
-        ),
-      )
+      .where(and(eq(shops.id, shopId), eq(shops.userId, userId)))
       .limit(1);
-
+      
+      // console.log(userId, shopId, shop);
     if (!shop) {
       throw new NotFoundException("Shop not found!");
     }
+
+    return shop;
   }
 
-  private async checkCategory(
-    shopId: string,
-    categoryId: string,
-  ) {
+  // --------------------------------------------------
+  // CHECK BRANCH OWNERSHIP
+  // --------------------------------------------------
+
+  private async checkBranch(shopId: string, branchId?: string | null) {
+    if (!branchId) return;
+
+    const [branch] = await this.db
+      .select({ id: branches.id })
+      .from(branches)
+      .where(and(eq(branches.id, branchId), eq(branches.shopId, shopId)))
+      .limit(1);
+
+    if (!branch) {
+      throw new BadRequestException("Branch does not belong to this shop!");
+    }
+
+    return branch;
+  }
+
+  // --------------------------------------------------
+  // CHECK CATEGORY OWNERSHIP
+  // --------------------------------------------------
+
+  private async checkCategory(shopId: string, categoryId?: string | null) {
+    if (!categoryId) return;
+
     const [category] = await this.db
       .select({ id: categories.id })
       .from(categories)
-      .where(
-        and(
-          eq(categories.id, categoryId),
-          eq(categories.shopId, shopId),
-          eq(categories.isDeleted, false),
-        ),
-      )
+      .where(and(eq(categories.id, categoryId), eq(categories.shopId, shopId), eq(categories.isDeleted, false)))
       .limit(1);
 
     if (!category) {
-      throw new BadRequestException(
-        "Category not found in this shop!",
-      );
+      throw new BadRequestException("Invalid category!");
     }
+
+    return category;
   }
 
-  private async checkProductCode(
-    shopId: string,
-    productCode: string,
-    excludeProductId?: string,
-  ) {
-    const conditions = [
-      eq(products.shopId, shopId),
-      sql`LOWER(${products.productCode}) = ${productCode.toLowerCase()}`,
-      eq(products.isDeleted, false),
-    ];
-
-    if (excludeProductId) {
-      conditions.push(
-        sql`${products.id} != ${excludeProductId}`,
-      );
-    }
-
-    const [existing] = await this.db
-      .select({ id: products.id })
-      .from(products)
-      .where(and(...conditions))
-      .limit(1);
-
-    if (existing) {
-      throw new ConflictException(
-        "Product code already exists in this shop!",
-      );
-    }
-  }
-
-  async createProduct(
-    userId: string,
-    shopId: string,
-    dto: CreateProductDto,
-  ) {
+  // --------------------------------------------------
+  // CREATE OR UPDATE PRODUCT
+  // --------------------------------------------------
+  async createOrUpdateProduct(userId: string, shopId: string, dto: CreateProductDto) {
     try {
-      await this.checkShop(userId, shopId);
+      await Promise.all([
+        this.checkShop(userId, shopId),
+        this.checkCategory(shopId, dto.categoryId),
+        ...((dto.branchId) ? [this.checkBranch(shopId, dto.branchId)] : []),
+      ])
 
-      const categoryId = dto.categoryId || null;
-      const productCode = dto.productCode?.trim() || null;
+      return await this.db.transaction(async (tx: any) => {
+        let product: any;
 
-      if (categoryId) {
-        await this.checkCategory(shopId, categoryId);
-      }
+        // Find existing product using product code
+        if (dto.productCode?.trim()) {
+          const [existingProduct] = await tx
+            .select()
+            .from(products)
+            .where(
+              and(
+                eq(products.shopId, shopId),
+                // eq(products.isDeleted, false),
+                // sql`LOWER(${products.productCode}) = ${dto.productCode.trim().toLowerCase()}`,
+                sql`LOWER(TRIM(${products.productCode})) = ${dto.productCode.trim().toLowerCase()}`,
+                sql`LOWER(TRIM(${products.productType})) = ${dto.productType.trim().toLowerCase()}`
+              ),
+            )
+            .limit(1);
 
-      if (productCode) {
-        await this.checkProductCode(shopId, productCode);
-      }
+          if (existingProduct) {
+            const updateData: Record<string, any> = { name: dto.name, updatedAt: new Date() };
 
-      const [product] = await this.db
-        .insert(products)
-        .values({
-          shopId,
-          categoryId,
-          name: dto.name.trim(),
-          productCode,
-          hsnCode: dto.hsnCode?.trim() || null,
-          gstRate: dto.gstRate ?? "0",
-          purchasePrice: dto.purchasePrice ?? "0",
-          sellingPrice: dto.sellingPrice ?? "0",
-          note: dto.note?.trim() || null,
-          isActive: dto.isActive ?? true,
+            if (dto.categoryId !== undefined) {
+              updateData.categoryId = dto.categoryId;
+            }
+
+            if (dto.note !== undefined) {
+              updateData.note = dto.note;
+            }
+
+            if (dto.hsnCode !== undefined) {
+              updateData.hsnCode = dto.hsnCode;
+            }
+
+            if (dto.productType !== undefined) {
+              updateData.productType = dto.productType;
+            }
+
+            if (dto.gstRate !== undefined) {
+              updateData.gstRate = dto.gstRate;
+            }
+
+            if (dto.purchasePrice !== undefined) {
+              updateData.purchasePrice = dto.purchasePrice;
+            }
+
+            if (dto.sellingPrice !== undefined) {
+              updateData.sellingPrice = dto.sellingPrice;
+            }
+
+            if (dto.isActive !== undefined) {
+              updateData.isActive = dto.isActive;
+            }
+
+            if (existingProduct.isDeleted) {
+              updateData.isDeleted = false;
+            }
+
+            [product] = await tx
+              .update(products)
+              .set(updateData)
+              .where(eq(products.id, existingProduct.id))
+              .returning();
+          }
+        }
+
+        // Create product if it does not exist
+        if (!product) {
+          [product] = await tx
+            .insert(products)
+            .values({
+              shopId,
+              categoryId: dto.categoryId,
+              name: dto.name,
+              productCode: dto.productCode?.trim() || null,
+              hsnCode: dto.hsnCode ?? null,
+              productType: dto.productType ?? null,
+              gstRate: dto.gstRate ?? "0",
+              purchasePrice: dto.purchasePrice ?? "0",
+              sellingPrice: dto.sellingPrice ?? "0",
+              note: dto.note ?? null,
+              isActive: dto.isActive ?? true,
+            })
+            .returning();
+        }
+
+        // Find inventory for shop or branch
+        const inventoryCondition = (dto.branchId)? eq(inventory.branchId, dto.branchId): isNull(inventory.branchId);
+
+        const [existingInventory] = await tx
+          .select()
+          .from(inventory)
+          .where(and(eq(inventory.shopId, shopId), eq(inventory.productId, product.id), inventoryCondition))
+          .limit(1);
+
+        let stock: any;
+
+        if (!existingInventory) {
+          [stock] = await tx
+            .insert(inventory)
+            .values({
+              shopId,
+              productId: product.id,
+              branchId: (dto.branchId) ?? null,
+              quantity: (dto.quantity) ?? "0",
+              unit: (dto.unit as any) ?? "pcs",
+            })
+            .returning();
+        } else {
+          // Do not replace existing stock quantity
+          const inventoryUpdate: Record<string, any> = { isDeleted: false, updatedAt: new Date() };
+
+          if (dto.unit !== undefined) {
+            inventoryUpdate.unit = dto.unit;
+          }
+
+          [stock] = await tx
+            .update(inventory)
+            .set(inventoryUpdate)
+            .where(eq(inventory.id, existingInventory.id))
+            .returning();
+        }
+
+        return { success: true, message: "Product saved successfully", product, inventory: stock };
+      });
+    } catch (error) {
+      handleDatabaseError(error);
+    }
+  }
+
+  // --------------------------------------------------
+  // GET ALL PRODUCTS
+  // --------------------------------------------------
+  async getProducts(userId: string, shopId: string, search?: string, categoryId?: string) {
+    try {
+      // await this.checkShop(userId, shopId);
+
+      return await this.db
+        .select({
+          id: products.id, shopId: products.shopId,
+          categoryId: products.categoryId, name: products.name,
+          productCode: products.productCode, hsnCode: products.hsnCode,
+          productType: products.productType, gstRate: products.gstRate,
+          purchasePrice: products.purchasePrice, sellingPrice: products.sellingPrice,
+          note: products.note, isActive: products.isActive,
+          createdAt: products.createdAt, updatedAt: products.updatedAt,
         })
-        .returning();
-
-      return {
-        success: true,
-        message: "Product created successfully!",
-        data: product,
-      };
-    } catch (error) {
-      handleDatabaseError(error);
-      throw error;
-    }
-  }
-
-  async getAllProducts(
-    userId: string,
-    shopId: string,
-    page = 1,
-    limit = 20,
-  search?: string,
-  categoryId?: string,
-  isActive?: boolean,
-  sortBy: "name" | "createdAt" = "createdAt",
-    sortOrder: "asc" | "desc" = "desc",
-  ) {
-    try {
-      await this.checkShop(userId, shopId);
-
-      const offset = (page - 1) * limit;
-
-      const conditions: any[] = [
-        eq(products.shopId, shopId),
-        eq(products.isDeleted, false),
-      ];
-
-      if (search?.trim()) {
-        conditions.push(
-          ilike(products.name, `%${search.trim()}%`),
-        );
-      }
-
-      if (categoryId) {
-        conditions.push(eq(products.categoryId, categoryId));
-      }
-
-      if (isActive !== undefined) {
-        conditions.push(eq(products.isActive, isActive));
-      }
-
-      const orderColumn =
-        sortBy === "name" ? products.name : products.createdAt;
-
-      const result = await this.db
-        .select()
         .from(products)
-        .where(and(...conditions))
-        .orderBy(
-          sortOrder === "asc"
-            ? asc(orderColumn)
-            : desc(orderColumn),
+        .where(
+          and(
+            eq(products.shopId, shopId),
+            eq(products.isDeleted, false),
+            (search) ? ilike(products.name, `%${search}%`): undefined,
+            (categoryId) ? eq(products.categoryId, categoryId): undefined,
+          ),
         )
-        .limit(limit)
-        .offset(offset);
-
-      const [{ total }] = await this.db
-        .select({ total: sql<number>`count(*)::int` })
-        .from(products)
-        .where(and(...conditions));
-
-      return {
-        success: true,
-        data: result,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      };
+        .orderBy(desc(products.createdAt));
     } catch (error) {
       handleDatabaseError(error);
-      throw error;
     }
   }
 
-  async getProductById(
-    userId: string,
-    shopId: string,
-    productId: string,
-  ) {
+  // --------------------------------------------------
+  // GET PRODUCT BY ID
+  // --------------------------------------------------
+  async getProductById(userId: string, shopId: string, productId: string) {
     try {
-      await this.checkShop(userId, shopId);
+      // await this.checkShop(userId, shopId);
 
       const [product] = await this.db
         .select()
@@ -237,7 +270,7 @@ export class ProductsService {
           and(
             eq(products.id, productId),
             eq(products.shopId, shopId),
-            eq(products.isDeleted, false),
+            // eq(products.isDeleted, false),
           ),
         )
         .limit(1);
@@ -246,152 +279,132 @@ export class ProductsService {
         throw new NotFoundException("Product not found!");
       }
 
-      return {
-        success: true,
-        data: product,
-      };
+      if (product.isDeleted) {
+        throw new NotFoundException("Product already deleted!");
+      }
+
+      const productInventory = await this.db
+        .select({ id: inventory.id, branchId: inventory.branchId, quantity: inventory.quantity, unit: inventory.unit })
+        .from(inventory)
+        .where(and(eq(inventory.shopId, shopId), eq(inventory.productId, productId), eq(inventory.isDeleted, false)));
+
+      return { success: true, ...product, inventory: productInventory, };
     } catch (error) {
       handleDatabaseError(error);
-      throw error;
     }
   }
 
-  async updateProduct(
-    userId: string,
-    shopId: string,
-    productId: string,
-    dto: UpdateProductDto,
-  ) {
+  // --------------------------------------------------
+  // UPDATE PRODUCT
+  // --------------------------------------------------
+  async updateProduct(userId: string, shopId: string, productId: string, dto: UpdateProductDto) {
     try {
-      await this.checkShop(userId, shopId);
+      await Promise.all([
+        this.checkShop(userId, shopId),
+        this.checkCategory(shopId, dto.categoryId)
+      ])
 
-      const [existing] = await this.db
-        .select({ id: products.id })
+      const [existingProduct] = await this.db
+        .select({ id: products.id, isDeleted: products.isDeleted })
         .from(products)
         .where(
           and(
             eq(products.id, productId),
             eq(products.shopId, shopId),
-            eq(products.isDeleted, false),
+            // eq(products.isDeleted, false),
           ),
         )
         .limit(1);
 
-      if (!existing) {
+      if (!existingProduct) {
         throw new NotFoundException("Product not found!");
-      }
+      } 
 
-      if (dto.categoryId) {
-        await this.checkCategory(shopId, dto.categoryId);
-      }
+      if (existingProduct.isDeleted) {
+        throw new NotFoundException("Product already deleted!");
+      } 
+      console.log({existingProduct});
+      
 
-      const productCode =
-        dto.productCode === undefined
-          ? undefined
-          : dto.productCode?.trim() || null;
+      const updateData: Record<string, any> = { updatedAt: new Date() };
 
-      if (productCode) {
-        await this.checkProductCode(
-          shopId,
-          productCode,
-          productId,
-        );
-      }
+      const allowedFields = [
+        "categoryId", "name", "productCode",
+        "hsnCode", "productType", "gstRate",
+        "purchasePrice", "sellingPrice", "note", "isActive",
+      ] as const;
 
-      const updateData: Record<string, any> = {};
-
-      for (const [key, value] of Object.entries(dto)) {
-        if (value !== undefined) {
-          updateData[key] = value;
+      for (const field of allowedFields) {
+        if (dto[field] !== undefined) {
+          updateData[field] = dto[field];
         }
       }
 
-      if (dto.name !== undefined) {
-        updateData.name = dto.name.trim();
+      if (typeof updateData.productCode === "string" && updateData.productCode.trim() === "") {
+        updateData.productCode = null;
+      } else if (typeof updateData.productCode === "string") {
+        updateData.productCode = updateData.productCode.trim();
       }
 
-      if (dto.productCode !== undefined) {
-        updateData.productCode = productCode;
-      }
-
-      if (dto.hsnCode !== undefined) {
-        updateData.hsnCode = dto.hsnCode.trim() || null;
-      }
-
-      if (dto.note !== undefined) {
-        updateData.note = dto.note.trim() || null;
-      }
-
-      if (dto.categoryId !== undefined) {
-        updateData.categoryId = dto.categoryId || null;
-      }
-
-      const [product] = await this.db
+      const [updatedProduct] = await this.db
         .update(products)
-        .set({
-          ...updateData,
-          updatedAt: new Date(),
-        })
+        .set(updateData)
         .where(
           and(
             eq(products.id, productId),
             eq(products.shopId, shopId),
-            eq(products.isDeleted, false),
+            // eq(products.isDeleted, false),
           ),
         )
         .returning();
 
-      return {
-        success: true,
-        message: "Product updated successfully!",
-        data: product,
-      };
+      return { success: true, message: "Product updated successfully", product: updatedProduct, };
     } catch (error) {
       handleDatabaseError(error);
-      throw error;
     }
   }
 
-  async deleteProduct(
-    userId: string,
-    shopId: string,
-    productId: string,
-  ) {
+  // --------------------------------------------------
+  // DELETE PRODUCT (SOFT DELETE)
+  // --------------------------------------------------
+  async deleteProduct(userId: string, shopId: string, productId: string) {
     try {
-      await this.checkShop(userId, shopId);
+      // await this.checkShop(userId, shopId);
 
-      const [product] = await this.db
+      const [deletedProduct] = await this.db
         .update(products)
-        .set({
-          isDeleted: true,
-          updatedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(products.id, productId),
-            eq(products.shopId, shopId),
-            eq(products.isDeleted, false),
-          ),
-        )
-        .returning({
-          id: products.id,
-          name: products.name,
-        });
+        .set({ isDeleted: true, updatedAt: new Date() })
+        .where(and(eq(products.id, productId), eq(products.shopId, shopId)))
+        .returning({ id: products.id, });
 
-      if (!product) {
-        throw new NotFoundException(
-          "Product not found or already deleted!",
-        );
+      if (!deletedProduct) {
+        throw new NotFoundException("Product not found!");
       }
 
-      return {
-        success: true,
-        message: "Product deleted successfully!",
-        data: product,
-      };
+      return { success: true, message: "Product deleted successfully", };
     } catch (error) {
       handleDatabaseError(error);
-      throw error;
+    }
+  }
+
+  // --------------------------------------------------
+  // REACTIVATE OR UNDO DELETE
+  // --------------------------------------------------
+  async reActivateProduct(userId: string, shopId: string, productId: string) {
+    try { 
+      await Promise.all([
+        this.checkShop(userId, shopId),
+        this.db
+          .update(products)
+          .set({ isDeleted: false, updatedAt: new Date() })
+          .where(and(eq(products.id, productId), eq(products.shopId, shopId)))
+          .returning({ id: products.id, })
+      ])
+
+      return { success: true, message: "Product activated successfully", };
+    } catch (error) {
+      handleDatabaseError(error);
     }
   }
 }
+  

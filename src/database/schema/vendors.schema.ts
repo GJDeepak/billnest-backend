@@ -25,23 +25,23 @@ export const vendors = pgTable("vendors", {
   
   address: varchar("address", { length: 255 }),
   
-  creditLimit: integer("creditLimit").default(0),
+  creditLimit: integer("creditLimit").notNull().default(0),
 
-  openingBalance: integer("openingBalance").default(0),
+  openingBalance: integer("openingBalance").notNull().default(0),
 
-  paymentTerms: paymentTermsEnum("payment_terms").default("immediate"),
+  paymentTerms: paymentTermsEnum("payment_terms").notNull().default("immediate"),
 
-  termsAccepted: boolean("terms_accepted").default(false),
+  termsAccepted: boolean("terms_accepted").notNull().default(false),
 
-  isVerified: boolean("is_verified").default(true),
+  isVerified: boolean("is_verified").notNull().default(true),
 
-  status: boolean("status").default(true),
+  status: boolean("status").notNull().default(true),
 
-  isDeleted: boolean("is_deleted").default(false),
+  isDeleted: boolean("is_deleted").notNull().default(false),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow().notNull(),
 
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().notNull(),
 }, 
 (table) => [
   uniqueIndex("vendors_shop_email_unique")

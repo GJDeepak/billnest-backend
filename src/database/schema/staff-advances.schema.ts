@@ -26,17 +26,17 @@ export const staffAdvances = pgTable("staff_advances", {
 
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
 
-  repaidAmount: numeric("repaid_amount", { precision: 12, scale: 2, }).default("0").notNull(),
+  repaidAmount: numeric("repaid_amount", { precision: 12, scale: 2, }).notNull().default("0").notNull(),
 
-  status: advanceStatusEnum("status").default("pending").notNull(),
+  status: advanceStatusEnum("status").notNull().default("pending").notNull(),
 
   reason: text("reason"),
 
   approvedBy: uuid("approved_by"),
   approvedAt: timestamp("approved_at"),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().notNull(),
 });
 
 // outstanding = amount - repaidAmount;

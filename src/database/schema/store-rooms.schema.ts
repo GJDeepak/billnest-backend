@@ -34,19 +34,19 @@ export const storeRooms = pgTable("store_rooms", {
 
     description: text("description"),
 
-    receiveCount: integer("receive_count").default(0),
-    issueCount: integer("issue_count").default(0),
-    wastageCount: integer("wastage_count").default(0),
+    receiveCount: integer("receive_count").notNull().default(0),
+    issueCount: integer("issue_count").notNull().default(0),
+    wastageCount: integer("wastage_count").notNull().default(0),
 
-    currentStock: integer("current_stock").default(0),
+    currentStock: integer("current_stock").notNull().default(0),
 
     isActive: boolean("is_active").notNull().default(true),
 
-    isDeleted: boolean("is_deleted").default(false),
+    isDeleted: boolean("is_deleted").notNull().default(false),
 
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow().notNull(),
 
-    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().notNull(),
 },
 (table) => [
     unique("store_rooms_branch_code_unique").on(table.branchId,table.code),
